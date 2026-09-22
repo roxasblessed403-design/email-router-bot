@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  email-router-bot:
+    build: .
+    container_name: email-router-bot
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      EMAIL_DOMAIN: ${EMAIL_DOMAIN}
+      FORWARD_EMAIL: ${FORWARD_EMAIL}
+      CLOUDFLARE_API_KEY: ${CLOUDFLARE_API_KEY}
+      CLOUDFLARE_EMAIL: ${CLOUDFLARE_EMAIL}
+      CLOUDFLARE_ZONE_ID: ${CLOUDFLARE_ZONE_ID}
+      API_SECRET: ${API_SECRET}
+      API_URL: ${API_URL:-http://localhost:3000}
+      PORT: ${PORT:-3000}
+    restart: unless-stopped
+    networks:
+      - email-network
+    volumes:
+      - ./bot.js:/app/bot.js
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 404) throw new Error(r.statusCode)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  email-network:
+    driver: bridge
